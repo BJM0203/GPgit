@@ -1,2 +1,2 @@
-테스트 목적으로 만든 파일입니다.
-실험 1
+This is a test purpose file.
+Test 1
