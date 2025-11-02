@@ -274,6 +274,7 @@ function drawScore() {
 }
 
 /**
+ * 게임 인트로, 게임 클리어 및 오버
  * HTML 요소를 사용하여 게임 상태를 업데이트하는 함수
  */
 function updateGameState(state) {
