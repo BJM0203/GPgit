@@ -64,6 +64,10 @@ const paddleHeight = 10;
 let paddleWidth = initialPaddleWidth;
 let paddleX = (canvas.width - paddleWidth) / 2;
 
+// ⬇️ 패들 기본 속도 정의 추가
+const basePaddleSpeed = 7; 
+
+
 // 사용자 입력 (키보드)
 let rightPressed = false;
 let leftPressed = false;
@@ -118,10 +122,20 @@ const LASER_DURATION = 7000;
 const SPEED_UP_DURATION = 4000;
 const SPEED_BOOST_FACTOR = 1.5; 
 
+// ⬇️ 디버프 관련 상수 추가 
+const PADDLE_SHRINK_DURATION = 4000; // 4초
+const PADDLE_SLOW_DURATION = 5000; // 5초
+const PADDLE_SLOW_FACTOR = 0.5; // 패들 이동 속도를 절반으로
+
+
 const itemTypes = [
     { type: "PADDLE_GROW", color: "green", duration: PADDLE_GROW_DURATION, value: 40, symbol: 'W' },
     { type: "LASER_SHOT", color: "red", duration: LASER_DURATION, value: 0, symbol: 'L' }, 
-    { type: "SPEED_UP", color: "blue", duration: SPEED_UP_DURATION, value: SPEED_BOOST_FACTOR, symbol: 'M' } 
+    { type: "SPEED_UP", color: "blue", duration: SPEED_UP_DURATION, value: SPEED_BOOST_FACTOR, symbol: 'M' },
+    
+    // ⬇️ 디버프 아이템 추가
+    { type: "PADDLE_SHRINK", color: "orange", duration: PADDLE_SHRINK_DURATION, value: 30, symbol: 'S' }, // 30만큼 감소
+    { type: "PADDLE_SLOW", color: "yellow", duration: PADDLE_SLOW_DURATION, value: PADDLE_SLOW_FACTOR, symbol: 'P' }
 ];
 
 function Item(x, y, type) {
@@ -136,6 +150,9 @@ function Item(x, y, type) {
 let paddleGrowTimer = null;
 let laserActiveTimer = null; 
 let speedUpTimer = null; 
+// ⬇️ 디버프 타이머 추가
+let paddleShrinkTimer = null; 
+let paddleSlowTimer = null; 
 
 // --- 레이저 시스템 ---
 function Laser(x, y) {
@@ -201,6 +218,10 @@ function drawPaddle() {
     let paddleColor = "#0095DD";
     if (paddleGrowTimer) paddleColor = "#4CAF50"; 
     if (laserActiveTimer) paddleColor = "#FF6347"; 
+    // ⬇️ 디버프 효과에 따른 패들 색상 변화 추가
+    if (paddleShrinkTimer) paddleColor = "#FF8C00"; // 주황 (PADDLE_SHRINK)
+    if (paddleSlowTimer) paddleColor = "#FFFF00"; // 노랑 (PADDLE_SLOW)
+    
     ctx.fillStyle = paddleColor;
     ctx.fill();
     ctx.closePath();
@@ -287,7 +308,17 @@ function drawScore() {
     }
     if (speedUpTimer) { 
         const remainingTime = Math.ceil((speedUpTimer.endTime - Date.now()) / 1000);
-        effectText += `S UP: ${remainingTime}s`;
+        effectText += `S UP: ${remainingTime}s `;
+    }
+
+    // ⬇️ 디버프 상태 표시 추가 
+    if (paddleShrinkTimer) {
+        const remainingTime = Math.ceil((paddleShrinkTimer.endTime - Date.now()) / 1000);
+        effectText += `SHRINK: ${remainingTime}s `;
+    }
+    if (paddleSlowTimer) { 
+        const remainingTime = Math.ceil((paddleSlowTimer.endTime - Date.now()) / 1000);
+        effectText += `SLOW: ${remainingTime}s`;
     }
 
     if (effectText) {
@@ -432,11 +463,65 @@ function activateSpeedUp(item) {
     updateBallSpeed();
 }
 
+// ⬇️ PADDLE_SHRINK 디버프 활성화 함수
+function activatePaddleShrink(item) {
+    // 버프/디버프 중첩 방지: 패들 크기 버프가 있다면 초기화
+    if (paddleGrowTimer) {
+        clearTimeout(paddleGrowTimer.id);
+        paddleWidth = initialPaddleWidth;
+        paddleGrowTimer = null;
+    }
+    // 기존 디버프 타이머 초기화
+    if (paddleShrinkTimer) {
+        clearTimeout(paddleShrinkTimer.id);
+        paddleWidth = initialPaddleWidth;
+    }
+
+    paddleWidth = initialPaddleWidth - item.type.value; // 너비 감소
+    if (paddleWidth < 20) paddleWidth = 20; // 최소 너비 제한
+
+    // 패들을 중앙으로 유지 (축소된 만큼 X좌표 조정)
+    paddleX += item.type.value / 2; 
+    if (paddleX < 0) paddleX = 0;
+    if (paddleX > canvas.width - paddleWidth) paddleX = canvas.width - paddleWidth;
+
+    const endTime = Date.now() + item.type.duration;
+    paddleShrinkTimer = {
+        endTime: endTime,
+        id: setTimeout(() => {
+            // 효과 종료 시 패들 너비와 위치 복원
+            paddleWidth = initialPaddleWidth;
+            // X좌표 복원 시 패들이 캔버스 밖으로 나가지 않도록 경계 검사
+            let newPaddleX = paddleX - (item.type.value / 2);
+            if (newPaddleX < 0) newPaddleX = 0;
+            if (newPaddleX > canvas.width - paddleWidth) newPaddleX = canvas.width - paddleWidth;
+            paddleX = newPaddleX;
+            paddleShrinkTimer = null;
+        }, item.type.duration)
+    };
+}
+
+// ⬇️ PADDLE_SLOW 디버프 활성화 함수
+function activatePaddleSlow(item) {
+    if (paddleSlowTimer) {
+        clearTimeout(paddleSlowTimer.id);
+    }
+    
+    const endTime = Date.now() + item.type.duration;
+    paddleSlowTimer = {
+        endTime: endTime,
+        id: setTimeout(() => {
+            paddleSlowTimer = null;
+        }, item.type.duration)
+    };
+}
+
 
 function shootLaser() {
     if (laserActiveTimer) {
         lasers.push(new Laser(paddleX + 5, canvas.height - paddleHeight - LASER_HEIGHT));
         lasers.push(new Laser(paddleX + paddleWidth - 5 - LASER_WIDTH, canvas.height - paddleHeight - LASER_HEIGHT));
+        playSound(laserSound); 
     }
 }
 
@@ -460,6 +545,12 @@ function itemCollisionDetection() {
                 activateLaserShot(item);
             } else if (item.type.type === "SPEED_UP") {
                 activateSpeedUp(item);
+            }
+            // ⬇️ 디버프 처리 로직 추가
+            else if (item.type.type === "PADDLE_SHRINK") {
+                activatePaddleShrink(item);
+            } else if (item.type.type === "PADDLE_SLOW") {
+                activatePaddleSlow(item);
             }
         }
     }
@@ -540,21 +631,32 @@ function updateBallSpeed() {
 }
 
 function clearAllEffects() {
+    // ⬇️ 버프 타이머 클리어
     if (paddleGrowTimer) {
         clearTimeout(paddleGrowTimer.id);
         paddleGrowTimer = null;
     }
-    paddleWidth = initialPaddleWidth; 
-
     if (laserActiveTimer) {
         clearTimeout(laserActiveTimer.id);
         laserActiveTimer = null;
     }
-    
     if (speedUpTimer) {
         clearTimeout(speedUpTimer.id);
         speedUpTimer = null;
     }
+    
+    // ⬇️ 디버프 타이머 클리어 추가
+    if (paddleShrinkTimer) {
+        clearTimeout(paddleShrinkTimer.id);
+        paddleShrinkTimer = null;
+    }
+    if (paddleSlowTimer) {
+        clearTimeout(paddleSlowTimer.id);
+        paddleSlowTimer = null;
+    }
+    
+    // 패들 너비 초기화 (버프/디버프 모두 해제)
+    paddleWidth = initialPaddleWidth; 
     
     updateBallSpeed(); 
 
@@ -563,7 +665,7 @@ function clearAllEffects() {
 }
 
 function resetBallAndPaddle() {
-    clearAllEffects(); 
+    clearAllEffects(); // ⬇️ 생명을 잃으면 모든 효과 초기화
     
     paddleX = (canvas.width - paddleWidth) / 2; 
 
@@ -719,8 +821,7 @@ function keyDownHandler(e) {
                 ballOnPaddle = false;
             } else if (laserActiveTimer && !spacePressed) {
                 shootLaser();
-                playSound(laserSound);
-
+                // 사운드는 shootLaser 함수 안에서 재생됩니다.
             }
         }
         spacePressed = true;
@@ -762,11 +863,18 @@ function draw() {
         laserCollisionDetection(); 
         updateBallSpeed();
 
-        const paddleSpeed = 7;
+        // ⬇️ 패들 이동 속도 계산 및 디버프 적용
+        let currentPaddleSpeed = basePaddleSpeed; 
+        const paddleSlowItem = itemTypes.find(item => item.type === "PADDLE_SLOW");
+        
+        if (paddleSlowTimer && paddleSlowItem) {
+            currentPaddleSpeed *= paddleSlowItem.value; 
+        }
+
         if(rightPressed && paddleX < canvas.width - paddleWidth) {
-            paddleX += paddleSpeed;
+            paddleX += currentPaddleSpeed;
         } else if(leftPressed && paddleX > 0) {
-            paddleX -= paddleSpeed;
+            paddleX -= currentPaddleSpeed;
         }
     }
 
@@ -788,3 +896,5 @@ document.addEventListener('click', handleFirstInteraction, { once: true });
 // 게임 시작 시 인트로 화면 표시
 updateGameState(GAME_STATE.INTRO);
 draw();
+
+// ⬇️ 여기에 있던 불필요한 닫는 괄호('}')를 제거했습니다.
