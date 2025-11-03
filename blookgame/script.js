@@ -149,7 +149,7 @@ function draw() {
 
     // 1. 벽 충돌 감지
     // 좌우 벽
-    if(x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
+    if(x + dx > canvas.width - ballRadius || x + dx < ballRadius)    {
         dx = -dx;
     }
     // 상단 벽
