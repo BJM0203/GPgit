@@ -1,0 +1,110 @@
+body {
+    /* 기존 스타일 유지: 중앙 정렬 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    /* 모던한 배경색/글꼴 */
+    background-color: #e9ecef; /* 약간 더 부드러운 회색 */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* 더 현대적인 글꼴 */
+}
+
+.game-container {
+    position: relative;
+    /* aspect-ratio: 16 / 9; /* 캔버스가 16:9 비율일 경우 주석 해제하여 사용 */
+    /* 그림자 개선: 더 부드럽고 깊은 느낌 */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 5px rgba(0, 0, 0, 0.1);
+    /* 모서리 둥글게 */
+    border-radius: 10px;
+    overflow: hidden; /* 캔버스나 오버레이가 둥근 모서리 밖으로 삐져나가지 않도록 */
+}
+
+#gameCanvas {
+    display: block; 
+    background: #f8f9fa; /* 캔버스 배경을 아주 연한 색으로 */
+    /* border-radius는 .game-container에 overflow: hidden을 적용했으므로 불필요 */
+}
+
+/* --- 오버레이 스타일 --- */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    /* 오버레이 투명도 조정 (0.85로 약간 밝게) */
+    background-color: rgba(0, 0, 0, 0.85);
+    transition: opacity 0.4s ease-in-out; /* transition 시간 및 함수 변경 */
+    box-sizing: border-box;
+    padding: 30px; /* 패딩 증가 */
+    z-index: 10;
+}
+
+.overlay.hidden {
+    /* display: none 대신 opacity를 사용하여 부드러운 사라짐 효과를 극대화 */
+    opacity: 0; 
+    pointer-events: none; /* 클릭 이벤트를 막아 뒤의 캔버스가 클릭되도록 함 */
+}
+
+#statusTitle {
+    font-size: 3em; /* 글자 크기 키우기 */
+    margin-bottom: 15px;
+    font-weight: bold;
+    letter-spacing: 2px; /* 약간의 자간 추가 */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#statusMessage {
+    font-size: 1.4em; /* 글자 크기 키우기 */
+    margin-bottom: 30px; /* 여백 증가 */
+    font-style: italic;
+}
+
+/* 1. 텍스트 깜빡임 애니메이션 정의 - 기존 유지 */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* 2. 깜빡임 효과를 적용할 클래스 - 기존 유지 */
+.blinking-message {
+    animation: blink 1.5s infinite;
+}
+
+#restartButton {
+    padding: 12px 25px; /* 패딩 증가 */
+    font-size: 1.2em;
+    cursor: pointer;
+    border: none;
+    /* 색상 미세 조정 */
+    background-color: #007bff; /* Primary Blue */
+    color: white;
+    border-radius: 7px;
+    /* 3D 느낌 추가 */
+    box-shadow: 0 5px 0 #0056b3; 
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.1s;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#restartButton:hover {
+    background-color: #0069d9;
+}
+
+#restartButton:active {
+    /* 버튼이 눌릴 때 효과 */
+    transform: translateY(5px);
+    box-shadow: 0 2px 0 #0056b3;
+}
+
+.hidden-button {
+    display: none;
+}
