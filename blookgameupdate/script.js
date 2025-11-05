@@ -30,6 +30,10 @@ function playSound(sound) {
     }
 }
 
+// --- 스테이지 관리 ---
+let currentStage = 1;
+const maxStage = 3;
+
 
 // --- 게임 상태 관리 ---
 const GAME_STATE = {
@@ -39,6 +43,7 @@ const GAME_STATE = {
     WIN: 'WIN'
 };
 let currentState = GAME_STATE.INTRO; 
+
 
 // --- 공 관리 시스템 ---
 const ballRadius = 10;
@@ -84,20 +89,39 @@ let totalBricks = brickRowCount * brickColumnCount; // 총 60개
 const brickColorMap = {
     1: "#FF5733", 
     2: "#FFC300", 
-    3: "#C70039"  
+    3: "#C70039",
+    4: "#800000",
+    5: "#4B0000"   
 };
-const maxHealth = 3;
+
+// 251105 스테이지 생성을 위한 코드 수정
+const maxHealth = 1;
+let useCustomHealth = false; // 기본값 : false, 테스트용 스테이지 블록 내구도 조절을 위한 코드
+//let useCustomHealth = true; // 테스트용 : true
+// 게임 시작 시 바로 레이저 가능하도록
+
 
 function initializeBricks() {
-    bricks = []; 
-    for(let c = 0; c < brickColumnCount; c++) {
+    bricks = [];
+    const dynamicMaxHealth = useCustomHealth ? maxHealth : Math.min(2 + currentStage, 5);
+    for (let c = 0; c < brickColumnCount; c++) {
         bricks[c] = [];
-        for(let r = 0; r < brickRowCount; r++) {
-            const health = (r % maxHealth) + 1; 
+        for (let r = 0; r < brickRowCount; r++) {
+            const health = Math.floor(Math.random() * dynamicMaxHealth) + 1;
             bricks[c][r] = { x: 0, y: 0, status: 1, health: health, maxHealth: health };
         }
     }
 }
+//function initializeBricks() {
+//     bricks = []; 
+//     for(let c = 0; c < brickColumnCount; c++) {
+//         bricks[c] = [];
+//         for(let r = 0; r < brickRowCount; r++) {
+//             const health = (r % maxHealth) + 1; 
+//             bricks[c][r] = { x: 0, y: 0, status: 1, health: health, maxHealth: health };
+//         }
+//     }
+// }
 initializeBricks(); 
 
 // 점수 및 생명 설정
@@ -135,6 +159,11 @@ function Item(x, y, type) {
 
 let paddleGrowTimer = null;
 let laserActiveTimer = null; 
+// 디버깅을 위한 게임 시작 시 바로 레이저 가능하도록
+// let laserActiveTimer = {
+//     endTime: Infinity, // 무한 지속
+//     id: null
+// };
 let speedUpTimer = null; 
 
 // --- 레이저 시스템 ---
@@ -356,7 +385,8 @@ function createExplosion(x, y, color) {
     }
 }
 
-function breakBrick(brick) {
+
+function breakBrick(brick) { 
     dropItem(brick);
 
     const explosionX = brick.x + brickWidth / 2;
@@ -367,10 +397,40 @@ function breakBrick(brick) {
     bricksBroken++;
     score += brick.maxHealth * 10;
 
-    if(bricksBroken === totalBricks) {
-        updateGameState(GAME_STATE.WIN); 
+    // 모든 벽돌 깨면 // 251105 스테이지 생성을 위한 코드 수정
+    if (bricksBroken === totalBricks) {
+        if (currentStage < maxStage) {
+            // 🎮 다음 스테이지로 이동
+            currentStage++;
+            nextStage();
+        } else {
+            // 마지막 스테이지 클리어
+            updateGameState(GAME_STATE.WIN);
+        }
     }
 }
+
+
+function nextStage() { // 251105 스테이지 생성을 위한 코드 수정
+    bricksBroken = 0;
+    totalBricks = brickRowCount * brickColumnCount;
+
+    initializeBricks();
+    resetBallAndPaddle();
+
+    // 속도 및 상태 갱신
+    updateBallSpeed();
+
+    // 안내 메시지
+    overlay.classList.remove("hidden");
+    statusTitle.textContent = `🌟 STAGE ${currentStage} 🌟`;
+    statusMessage.textContent = "스페이스바를 눌러 다음 스테이지를 시작하세요!";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+    restartButton.classList.add("hidden-button");
+    
+    currentState = GAME_STATE.INTRO; // 인트로로 전환
+}
+
 
 function dropItem(brick) {
     if (Math.random() < 0.15) { 
@@ -503,41 +563,92 @@ function laserCollisionDetection() {
     }
 }
 
-function updateBallSpeed() {
-    // 1. 기본 속도 계산 (점수 기반)
-    const speedIncreaseFactor = Math.floor(bricksBroken / 5);
-    let currentBaseSpeed = 3 + (speedIncreaseFactor * 0.1); 
+// function updateBallSpeed() {
+//     // 1. 기본 속도 계산 (점수 기반)
+//     const speedIncreaseFactor = Math.floor(bricksBroken / 5);
+//     let currentBaseSpeed = 3 + (speedIncreaseFactor * 0.1); 
     
-    // 2. SPEED UP 아이템 효과 적용
+//     // 2. SPEED UP 아이템 효과 적용
+//     if (speedUpTimer) {
+//         const speedItem = itemTypes.find(item => item.type === "SPEED_UP");
+//         if (speedItem) {
+//             currentBaseSpeed *= speedItem.value;
+//         }
+//     }
+    
+//     // 최종 baseSpeed에 반영
+//     baseSpeed = currentBaseSpeed; 
+
+//     // 3. 현재 떠 있는 모든 공의 속도를 재설정
+//     for (const ball of balls) {
+//         if (typeof ball.dx !== 'number' || typeof ball.dy !== 'number' || isNaN(ball.dx) || isNaN(ball.dy) || (Math.abs(ball.dx) < 1 && Math.abs(ball.dy) < 1)) {
+//             ball.dx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+//             ball.dy = -baseSpeed;
+//             continue; 
+//         }
+
+//         let signX = Math.sign(ball.dx);
+//         let signY = Math.sign(ball.dy);
+        
+//         if (signX === 0) signX = Math.random() > 0.5 ? 1 : -1;
+//         if (signY === 0) signY = -1; 
+
+//         // 속도 크기를 현재 baseSpeed로 유지
+//         ball.dx = signX * baseSpeed;
+//         ball.dy = signY * baseSpeed;
+//     }
+// }
+function updateBallSpeed() { // 251105 스테이지 생성을 위한 코드 수정
+    // ① 스테이지에 따른 기본 속도 증가
+    // 스테이지 1 → +0, 스테이지 2 → +0.8, 스테이지 3 → +1.6
+    const stageSpeedBoost = (currentStage - 1) * 0.8;  
+
+    // ② 벽돌을 부술 때마다 점진적으로 가속 (5개 부술 때마다 +0.1)
+    const speedIncreaseFactor = Math.floor(bricksBroken / 5) * 0.1;
+
+    // ③ 기본 속도 계산 (기본값 3)
+    let currentBaseSpeed = 3 + stageSpeedBoost + speedIncreaseFactor;
+
+    // ④ SPEED UP 아이템 효과 적용
     if (speedUpTimer) {
         const speedItem = itemTypes.find(item => item.type === "SPEED_UP");
-        if (speedItem) {
-            currentBaseSpeed *= speedItem.value;
-        }
+        if (speedItem) currentBaseSpeed *= speedItem.value;
     }
-    
-    // 최종 baseSpeed에 반영
-    baseSpeed = currentBaseSpeed; 
 
-    // 3. 현재 떠 있는 모든 공의 속도를 재설정
+    // ⑤ 너무 빨라지지 않도록 상한 설정 (예: 8)
+    if (currentBaseSpeed > 8) currentBaseSpeed = 8;
+
+    // ⑥ 최종 baseSpeed 반영
+    baseSpeed = currentBaseSpeed;
+
+    // ⑦ 현재 떠 있는 모든 공의 속도 재조정
     for (const ball of balls) {
-        if (typeof ball.dx !== 'number' || typeof ball.dy !== 'number' || isNaN(ball.dx) || isNaN(ball.dy) || (Math.abs(ball.dx) < 1 && Math.abs(ball.dy) < 1)) {
+        // 혹시 잘못된 값일 경우 초기화
+        if (
+            typeof ball.dx !== "number" ||
+            typeof ball.dy !== "number" ||
+            isNaN(ball.dx) ||
+            isNaN(ball.dy) ||
+            (Math.abs(ball.dx) < 1 && Math.abs(ball.dy) < 1)
+        ) {
             ball.dx = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
             ball.dy = -baseSpeed;
-            continue; 
+            continue;
         }
 
+        // 현재 이동 방향 유지
         let signX = Math.sign(ball.dx);
         let signY = Math.sign(ball.dy);
-        
-        if (signX === 0) signX = Math.random() > 0.5 ? 1 : -1;
-        if (signY === 0) signY = -1; 
 
-        // 속도 크기를 현재 baseSpeed로 유지
+        if (signX === 0) signX = Math.random() > 0.5 ? 1 : -1;
+        if (signY === 0) signY = -1;
+
+        // 방향 유지한 채 속도만 변경
         ball.dx = signX * baseSpeed;
         ball.dy = signY * baseSpeed;
     }
 }
+
 
 function clearAllEffects() {
     if (paddleGrowTimer) {
@@ -583,6 +694,7 @@ function resetBallAndPaddle() {
 function resetGame() {
     clearAllEffects(); 
     
+    currentStage = 1; // 첫 스테이지로 리셋, 251105 스테이지 생성을 위한 코드 수정
     bricksBroken = 0; 
     score = 0;
     lives = 3; 
