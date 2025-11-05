@@ -159,11 +159,6 @@ function Item(x, y, type) {
 
 let paddleGrowTimer = null;
 let laserActiveTimer = null; 
-// 디버깅을 위한 게임 시작 시 바로 레이저 가능하도록
-// let laserActiveTimer = {
-//     endTime: Infinity, // 무한 지속
-//     id: null
-// };
 let speedUpTimer = null; 
 
 // --- 레이저 시스템 ---
@@ -813,8 +808,19 @@ function keyDownHandler(e) {
         rightPressed = true;
     } else if(e.key === "Left" || e.key === "ArrowLeft") {
         leftPressed = true;
-    } 
-    
+    }
+    // 디버깅을 위한 L키로 레이저 모드 토글 (ON/OFF)
+    if (e.key === "l" || e.key === "L") {
+        if (laserActiveTimer && laserActiveTimer.endTime === Infinity) {
+            laserActiveTimer = null;
+            console.log("❌ 레이저 무한 모드 비활성화");
+        } else {
+            laserActiveTimer = { endTime: Infinity, id: null };
+            playSound(laserSound);
+            console.log("🚀 레이저 무한 모드 활성화!");
+        }
+    }
+
     if(e.key === " " || e.key === "Spacebar") {
         e.preventDefault(); 
         
