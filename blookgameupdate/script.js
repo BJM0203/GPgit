@@ -20,6 +20,23 @@ const overSound = document.getElementById("overSound");
 const roundSound = document.getElementById("roundSound");
 const cleardSound = document.getElementById("cleardSound");
 
+// 프레임에 따라 공 속도 달라져 프레임 고정
+let lastTime = 0;
+const fixedDelta = 1000 / 60; // 60fps 기준 고정 간격
+
+function gameLoop(timestamp) {
+  const delta = timestamp - lastTime;
+  if (delta >= fixedDelta) {
+    updateGame(fixedDelta / 1000); // 초 단위
+    renderGame();
+    lastTime = timestamp;
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+
+
 
 
 function playSound(sound) {
