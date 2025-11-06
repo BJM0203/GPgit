@@ -33,6 +33,8 @@ function playSound(sound) {
 // --- 스테이지 관리 ---
 let currentStage = 1;
 const maxStage = 3;
+let isTransitioning = false; // 스테이지 전환 중인지 여부
+
 
 
 // --- 게임 상태 관리 ---
@@ -131,7 +133,7 @@ initializeBricks();
 // 점수 및 생명 설정
 let score = 0;
 let bricksBroken = 0; 
-let lives = 3;
+let lives = 3; 
 
 // 폭발 파티클 관리
 let particles = [];
@@ -412,7 +414,32 @@ function createExplosion(x, y, color) {
 }
 
 
-function breakBrick(brick) { 
+// function breakBrick(brick) {
+//     dropItem(brick);
+
+//     const explosionX = brick.x + brickWidth / 2;
+//     const explosionY = brick.y + brickHeight / 2;
+//     createExplosion(explosionX, explosionY, brickColorMap[brick.maxHealth]);
+
+//     brick.status = 0;
+//     bricksBroken++;
+//     score += brick.maxHealth * 10;
+
+//     // 모든 벽돌 깨면 // 251105 스테이지 생성을 위한 코드 수정
+//     if (bricksBroken === totalBricks) {
+//         if (currentStage < maxStage) {
+//             // 🎮 다음 스테이지로 이동
+//             currentStage++;
+//             nextStage();
+//         } else {
+//             // 마지막 스테이지 클리어
+//             updateGameState(GAME_STATE.WIN);
+//         }
+//     }
+// }
+function breakBrick(brick) { // 디버깅 레이저로 인한 다음 스테이지로 넘어가지 않은 버그 수정 코드
+    if (isTransitioning) return; // 전환 중이면 중복 실행 방지 
+
     dropItem(brick);
 
     const explosionX = brick.x + brickWidth / 2;
@@ -423,15 +450,19 @@ function breakBrick(brick) {
     bricksBroken++;
     score += brick.maxHealth * 10;
 
-    // 모든 벽돌 깨면 // 251105 스테이지 생성을 위한 코드 수정
+    // 모든 벽돌 깨면
     if (bricksBroken === totalBricks) {
+        isTransitioning = true; // 전환 시작!
+
         if (currentStage < maxStage) {
-            // 🎮 다음 스테이지로 이동
             currentStage++;
-            nextStage();
+            setTimeout(() => {
+                nextStage();
+                isTransitioning = false; // 전환 완료 후 해제
+            }, 200); // 살짝 딜레이 주면 자연스럽게 전환
         } else {
-            // 마지막 스테이지 클리어
             updateGameState(GAME_STATE.WIN);
+            isTransitioning = false;
         }
     }
 }
