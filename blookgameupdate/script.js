@@ -100,8 +100,8 @@ let leftPressed = false;
 let spacePressed = false; 
 
 // 🧱 벽돌 설정 (수정됨)
-const brickRowCount = 1;     // 6행으로 증가
-const brickColumnCount = 1; // 10열로 증가
+const brickRowCount = 6;     // 6행으로 증가
+const brickColumnCount = 10; // 10열로 증가
 const brickWidth = 50;       // 너비를 50으로 조정
 const brickHeight = 20;
 const brickPadding = 5;
