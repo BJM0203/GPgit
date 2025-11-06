@@ -17,6 +17,8 @@ const laserSound = document.getElementById("laserSound");
 const dropSound = document.getElementById("dropSound");
 const openingSound = document.getElementById("openingSound");
 const overSound = document.getElementById("overSound");
+const roundSound = document.getElementById("roundSound");
+const cleardSound = document.getElementById("cleardSound");
 
 
 
@@ -81,8 +83,8 @@ let leftPressed = false;
 let spacePressed = false; 
 
 // 🧱 벽돌 설정 (수정됨)
-const brickRowCount = 6;     // 6행으로 증가
-const brickColumnCount = 10; // 10열로 증가
+const brickRowCount = 1;     // 6행으로 증가
+const brickColumnCount = 1; // 10열로 증가
 const brickWidth = 50;       // 너비를 50으로 조정
 const brickHeight = 20;
 const brickPadding = 5;
@@ -455,12 +457,14 @@ function breakBrick(brick) { // 디버깅 레이저로 인한 다음 스테이�
         isTransitioning = true; // 전환 시작!
 
         if (currentStage < maxStage) {
+            playSound(roundSound);
             currentStage++;
             setTimeout(() => {
                 nextStage();
                 isTransitioning = false; // 전환 완료 후 해제
-            }, 200); // 살짝 딜레이 주면 자연스럽게 전환
+            }, 100); // 살짝 딜레이 주면 자연스럽게 전환
         } else {
+            playSound(cleardSound);
             updateGameState(GAME_STATE.WIN);
             isTransitioning = false;
         }
