@@ -120,7 +120,7 @@ const brickColorMap = {
 };
 
 // 251105 스테이지 생성을 위한 코드 수정
-const maxHealth = 1;
+const maxHealth = 5;
 let useCustomHealth = false; // 기본값 : false, 테스트용 스테이지 블록 내구도 조절을 위한 코드
 //let useCustomHealth = true; // 테스트용 : true
 // 게임 시작 시 바로 레이저 가능하도록
