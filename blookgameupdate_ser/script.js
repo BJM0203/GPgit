@@ -51,7 +51,7 @@ function playSound(sound) {
 
 // --- 스테이지 관리 ---
 let currentStage = 1;
-const maxStage = 3;
+const maxStage = 2;
 let isTransitioning = false; // 스테이지 전환 중인지 여부
 
 
@@ -1068,4 +1068,5 @@ updateGameState(GAME_STATE.INTRO);
 draw();
 
 // ⬇️ 여기에 있던 불필요한 닫는 괄호('}')를 제거했습니다.
+
 
