@@ -152,7 +152,7 @@ initializeBricks();
 // 점수 및 생명 설정
 let score = 0;
 let bricksBroken = 0; 
-let lives = 3; 
+let lives = 5; 
 
 // 폭발 파티클 관리
 let particles = [];
