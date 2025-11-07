@@ -152,7 +152,7 @@ initializeBricks();
 // 점수 및 생명 설정
 let score = 0;
 let bricksBroken = 0; 
-let lives = 3; 
+let lives = 100; 
 
 // 폭발 파티클 관리
 let particles = [];
@@ -1068,3 +1068,4 @@ updateGameState(GAME_STATE.INTRO);
 draw();
 
 // ⬇️ 여기에 있던 불필요한 닫는 괄호('}')를 제거했습니다.
+
